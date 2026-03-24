@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>LUMINA DB</title>
+<title>LUMINA DB FIX</title>
 </head>
 <body style="background:#111;color:#fff;text-align:center;padding-top:80px;">
 
@@ -23,7 +23,7 @@ const steps = [
   {w:"C", m:"c"}
 ];
 
-let db;
+let db = null;
 
 // DB初期化
 const request = indexedDB.open("LuminaDB", 1);
@@ -35,7 +35,8 @@ request.onupgradeneeded = function(e){
 
 request.onsuccess = function(e){
   db = e.target.result;
-  load(); // 起動時に読み込み
+  console.log("DB READY");
+  load();
 };
 
 // Next
@@ -47,6 +48,11 @@ function next(){
 
 // Save
 function save(){
+  if(!db){
+    alert("DB準備中…少し待ってください");
+    return;
+  }
+
   const word = document.getElementById("word").innerText;
   const mean = document.getElementById("mean").innerText;
 
@@ -58,12 +64,14 @@ function save(){
   document.getElementById("lumina").innerText = "saved";
 
   tx.oncomplete = function(){
-    load(); // 保存後に再描画
+    load();
   };
 }
 
-// 読み込み表示
+// 読み込み
 function load(){
+  if(!db) return;
+
   const tx = db.transaction("memory","readonly");
   const store = tx.objectStore("memory");
 
