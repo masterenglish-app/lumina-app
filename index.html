@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>LUMINA</title>
+<title>LUMINA DB</title>
 </head>
 <body style="background:#111;color:#fff;text-align:center;padding-top:80px;">
 
@@ -23,24 +23,62 @@ const steps = [
   {w:"C", m:"c"}
 ];
 
+let db;
+
+// DB初期化
+const request = indexedDB.open("LuminaDB", 1);
+
+request.onupgradeneeded = function(e){
+  const db = e.target.result;
+  db.createObjectStore("memory", {autoIncrement:true});
+};
+
+request.onsuccess = function(e){
+  db = e.target.result;
+  load(); // 起動時に読み込み
+};
+
+// Next
 function next(){
   const s = steps[Math.floor(Math.random()*steps.length)];
   document.getElementById("word").innerText = s.w;
   document.getElementById("mean").innerText = s.m;
 }
 
+// Save
 function save(){
   const word = document.getElementById("word").innerText;
   const mean = document.getElementById("mean").innerText;
 
+  const tx = db.transaction("memory","readwrite");
+  const store = tx.objectStore("memory");
+
+  store.add({word, mean});
+
   document.getElementById("lumina").innerText = "saved";
 
-  const list = document.getElementById("list");
+  tx.oncomplete = function(){
+    load(); // 保存後に再描画
+  };
+}
 
-  const line = document.createElement("div");
-  line.innerText = word + " - " + mean;
+// 読み込み表示
+function load(){
+  const tx = db.transaction("memory","readonly");
+  const store = tx.objectStore("memory");
 
-  list.appendChild(line);
+  const req = store.getAll();
+
+  req.onsuccess = function(){
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    req.result.forEach(item=>{
+      const div = document.createElement("div");
+      div.innerText = item.word + " - " + item.mean;
+      list.appendChild(div);
+    });
+  };
 }
 </script>
 
