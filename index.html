@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>LUMINA AI SELECT FIX</title>
+<title>LUMINA STABLE</title>
 </head>
 <body style="background:#111;color:#fff;text-align:center;padding-top:80px;">
 
@@ -13,8 +13,7 @@
 <button onclick="save()">Save</button>
 
 <p id="lumina"></p>
-
-<div id="list">---</div>
+<div id="list"></div>
 
 <script>
 const base = [
@@ -23,16 +22,13 @@ const base = [
   {w:"C", m:"c"}
 ];
 
-let db = null;
+let db;
 
-// DB初期化（バージョンそのまま）
-indexedDB.open("LuminaDB_v2", 1);
+const request = indexedDB.open("LuminaDB_clean", 1);
 
 request.onupgradeneeded = function(e){
   const db = e.target.result;
-  if(!db.objectStoreNames.contains("memory")){
-    db.createObjectStore("memory",{keyPath:"word"});
-  }
+  db.createObjectStore("memory",{keyPath:"word"});
 };
 
 request.onsuccess = function(e){
@@ -40,104 +36,39 @@ request.onsuccess = function(e){
   load();
 };
 
-// 🔥 AI選択（count安全対応）
 function next(){
-  if(!db){
-    fallback();
-    return;
-  }
-
-  const tx = db.transaction("memory","readonly");
-  const store = tx.objectStore("memory");
-
-  const req = store.getAll();
-
-  req.onsuccess = function(){
-    let data = req.result;
-
-    if(data.length === 0){
-      fallback();
-      return;
-    }
-
-    let pool = [];
-
-    data.forEach(item=>{
-      let count = item.count || 1; // ← 修正①
-      let weight = Math.max(1, 5 - count);
-
-      for(let i=0;i<weight;i++){
-        pool.push(item);
-      }
-    });
-
-    const pick = pool[Math.floor(Math.random()*pool.length)];
-
-    document.getElementById("word").innerText = pick.word;
-    document.getElementById("mean").innerText = pick.mean;
-  };
-}
-
-// 初期表示
-function fallback(){
   const s = base[Math.floor(Math.random()*base.length)];
   document.getElementById("word").innerText = s.w;
   document.getElementById("mean").innerText = s.m;
 }
 
-// 🔥 保存（count安全対応）
 function save(){
-  if(!db) return;
-
   const word = document.getElementById("word").innerText;
   const mean = document.getElementById("mean").innerText;
 
   const tx = db.transaction("memory","readwrite");
   const store = tx.objectStore("memory");
 
-  const req = store.get(word);
+  store.put({
+    word: word,
+    mean: mean,
+    count: 1
+  });
 
-  req.onsuccess = function(){
-    let data = req.result;
-
-    if(data){
-      data.count = (data.count || 1) + 1; // ← 修正②
-      data.lastSeen = Date.now();
-    }else{
-      data = {
-        word: word,
-        mean: mean,
-        count: 1,
-        lastSeen: Date.now()
-      };
-    }
-
-    store.put(data);
-  };
-
-  tx.oncomplete = function(){
-    document.getElementById("lumina").innerText = "最適化が進んでいます";
-    load();
-  };
+  tx.oncomplete = load;
 }
 
-// 🔥 表示（count安全対応）
 function load(){
-  if(!db) return;
-
   const tx = db.transaction("memory","readonly");
   const store = tx.objectStore("memory");
 
-  const req = store.getAll();
-
-  req.onsuccess = function(){
+  store.getAll().onsuccess = function(e){
     const list = document.getElementById("list");
     list.innerHTML = "";
 
-    req.result.forEach(item=>{
+    e.target.result.forEach(item=>{
       const div = document.createElement("div");
-      div.innerText =
-        item.word + " (" + (item.count || 1) + ")"; // ← 修正③
+      div.innerText = item.word + " (" + item.count + ")";
       list.appendChild(div);
     });
   };
