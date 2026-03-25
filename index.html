@@ -1,107 +1,45 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-</head>
-<body style="background:#111;color:#fff;text-align:center;padding-top:80px;">
-
-<h2 id="word">Tap</h2>
-<p id="mean"></p>
-
-<button onclick="next()">Next</button>
-<button onclick="save()">Save</button>
-
-<p id="status">DB準備中...</p>
-<div id="list"></div>
-
-<script>
-const data = [
-  {w:"A", m:"a"},
-  {w:"B", m:"b"}
-];
-
-let db = null;
-
-// 🔥 DB（新規で必ずクリーン）
-const request = indexedDB.open("LuminaFinal", 1);
-
-request.onupgradeneeded = function(e){
-  const db = e.target.result;
-  db.createObjectStore("memory", {keyPath:"word"});
-};
-
-request.onsuccess = function(e){
-  db = e.target.result;
-  document.getElementById("status").innerText = "準備完了";
-  load();
-};
-
-// 単語表示
 function next(){
-  const s = data[Math.floor(Math.random()*data.length)];
-  document.getElementById("word").innerText = s.w;
-  document.getElementById("mean").innerText = s.m;
-}
-
-// 🔥 保存（完全版）
-function save(){
   if(!db){
-    alert("準備中です");
+    fallback();
     return;
   }
-
-  // 🔥 正規化（超重要）
-  const word = document.getElementById("word").innerText.trim().toLowerCase();
-  const mean = document.getElementById("mean").innerText.trim();
-
-  const tx = db.transaction("memory","readwrite");
-  const store = tx.objectStore("memory");
-
-  const req = store.get(word);
-
-  req.onsuccess = function(){
-    let data = req.result;
-
-    if(data){
-      // 成長
-      data.count = (data.count || 1) + 1;
-    }else{
-      // 新規
-      data = {
-        word: word,
-        mean: mean,
-        count: 1
-      };
-    }
-
-    store.put(data);
-  };
-
-  tx.oncomplete = function(){
-    load();
-  };
-}
-
-// 表示
-function load(){
-  if(!db) return;
 
   const tx = db.transaction("memory","readonly");
   const store = tx.objectStore("memory");
 
-  store.getAll().onsuccess = function(e){
-    const list = document.getElementById("list");
-    list.innerHTML = "";
+  const req = store.getAll();
 
-    e.target.result.forEach(item=>{
-      const div = document.createElement("div");
-      div.innerText =
-        item.word + " - " + item.mean + " (" + (item.count || 1) + ")";
-      list.appendChild(div);
+  req.onsuccess = function(){
+    const data = req.result;
+
+    if(data.length === 0){
+      fallback();
+      return;
+    }
+
+    let pool = [];
+
+    data.forEach(item=>{
+      let count = item.count || 1;
+
+      // 🔥 苦手ほど出やすい
+      let weight = Math.max(1, 5 - count);
+
+      for(let i=0;i<weight;i++){
+        pool.push(item);
+      }
     });
+
+    const pick = pool[Math.floor(Math.random()*pool.length)];
+
+    document.getElementById("word").innerText = pick.word;
+    document.getElementById("mean").innerText = pick.mean;
   };
 }
-</script>
 
-</body>
-</html>
+// 初期用
+function fallback(){
+  const s = data[Math.floor(Math.random()*data.length)];
+  document.getElementById("word").innerText = s.w;
+  document.getElementById("mean").innerText = s.m;
+}
