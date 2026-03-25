@@ -9,6 +9,9 @@
 <p id="mean"></p>
 
 <button onclick="next()">Next</button>
+<button onclick="save()">Save</button>
+
+<div id="list"></div>
 
 <script>
 const data = [
@@ -16,10 +19,35 @@ const data = [
   {w:"B", m:"b"}
 ];
 
+let memory = [];
+
+// 単語表示
 function next(){
   const s = data[Math.floor(Math.random()*data.length)];
   document.getElementById("word").innerText = s.w;
   document.getElementById("mean").innerText = s.m;
+}
+
+// 保存
+function save(){
+  const word = document.getElementById("word").innerText;
+  const mean = document.getElementById("mean").innerText;
+
+  memory.push({word, mean});
+
+  render();
+}
+
+// 一覧表示
+function render(){
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  memory.forEach(item=>{
+    const div = document.createElement("div");
+    div.innerText = item.word + " - " + item.mean;
+    list.appendChild(div);
+  });
 }
 </script>
 
