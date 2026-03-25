@@ -22,8 +22,8 @@ const data = [
 
 let db = null;
 
-// 🔥 DB（wordをキーにする）
-const request = indexedDB.open("LuminaStep4", 1);
+// 🔥 DB（新規で必ずクリーン）
+const request = indexedDB.open("LuminaFinal", 1);
 
 request.onupgradeneeded = function(e){
   const db = e.target.result;
@@ -43,15 +43,16 @@ function next(){
   document.getElementById("mean").innerText = s.m;
 }
 
-// 🔥 保存（成長型）
+// 🔥 保存（完全版）
 function save(){
   if(!db){
     alert("準備中です");
     return;
   }
 
-  const word = document.getElementById("word").innerText;
-  const mean = document.getElementById("mean").innerText;
+  // 🔥 正規化（超重要）
+  const word = document.getElementById("word").innerText.trim().toLowerCase();
+  const mean = document.getElementById("mean").innerText.trim();
 
   const tx = db.transaction("memory","readwrite");
   const store = tx.objectStore("memory");
@@ -62,7 +63,7 @@ function save(){
     let data = req.result;
 
     if(data){
-      // 🔥 成長
+      // 成長
       data.count = (data.count || 1) + 1;
     }else{
       // 新規
