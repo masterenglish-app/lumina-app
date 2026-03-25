@@ -1,5 +1,4 @@
 function next(){
-  // DB未準備
   if(!db){
     fallback();
     return;
@@ -13,7 +12,6 @@ function next(){
   req.onsuccess = function(){
     const dataList = req.result;
 
-    // 🔥 データがない or 不正
     if(!dataList || dataList.length === 0){
       fallback();
       return;
@@ -22,35 +20,32 @@ function next(){
     let pool = [];
 
     dataList.forEach(item=>{
-      if(!item.word || !item.mean) return; // 壊れデータ防御
+      if(!item.word || !item.mean) return;
 
       let count = item.count || 1;
       let weight = Math.max(1, 5 - count);
 
-      for(let i=0;i<weight;i++){
+      for(let i = 0; i < weight; i++){
         pool.push(item);
       }
     });
 
-    // 🔥 poolが空の保険
     if(pool.length === 0){
       fallback();
       return;
     }
 
-    const pick = pool[Math.floor(Math.random()*pool.length)];
+    const pick = pool[Math.floor(Math.random() * pool.length)];
 
     document.getElementById("word").innerText = pick.word;
     document.getElementById("mean").innerText = pick.mean;
   };
 
-  // 🔥 エラー時の保険
   req.onerror = function(){
     fallback();
   };
 }
 
-// 初期表示（絶対安全）
 function fallback(){
   const s = data[Math.floor(Math.random()*data.length)];
   document.getElementById("word").innerText = s.w;
