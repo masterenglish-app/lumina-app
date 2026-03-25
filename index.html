@@ -1,24 +1,12 @@
-<!DOCTYPE html>
-<html>
-<body style="background:#111;color:#fff;text-align:center;padding-top:80px;">
-
-<h2 id="word">Tap</h2>
-<p id="mean"></p>
-
 <button onclick="next()">Next</button>
+<button onclick="save()">Save</button>
 
 <script>
-const data = [
-  {w:"A", m:"a"},
-  {w:"B", m:"b"}
-];
+let memory = [];
 
-function next(){
-  const s = data[Math.floor(Math.random()*data.length)];
-  document.getElementById("word").innerText = s.w;
-  document.getElementById("mean").innerText = s.m;
+function save(){
+  const w = document.getElementById("word").innerText;
+  memory.push(w);
+  alert("saved");
 }
 </script>
-
-</body>
-</html>
