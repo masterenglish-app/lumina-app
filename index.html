@@ -26,7 +26,7 @@ const base = [
 let db = null;
 
 // DB初期化（バージョンそのまま）
-const request = indexedDB.open("LuminaDB", 3);
+indexedDB.open("LuminaDB_v2", 1);
 
 request.onupgradeneeded = function(e){
   const db = e.target.result;
