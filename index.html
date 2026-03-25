@@ -22,12 +22,12 @@ const data = [
 
 let db = null;
 
-// DB初期化
-const request = indexedDB.open("LuminaStep3", 1);
+// 🔥 DB（wordをキーにする）
+const request = indexedDB.open("LuminaStep4", 1);
 
 request.onupgradeneeded = function(e){
   const db = e.target.result;
-  db.createObjectStore("memory", {autoIncrement:true});
+  db.createObjectStore("memory", {keyPath:"word"});
 };
 
 request.onsuccess = function(e){
@@ -43,10 +43,10 @@ function next(){
   document.getElementById("mean").innerText = s.m;
 }
 
-// 保存（安全版）
+// 🔥 保存（成長型）
 function save(){
   if(!db){
-    alert("まだ準備中です。1秒待ってください");
+    alert("準備中です");
     return;
   }
 
@@ -56,14 +56,32 @@ function save(){
   const tx = db.transaction("memory","readwrite");
   const store = tx.objectStore("memory");
 
-  store.add({word, mean});
+  const req = store.get(word);
+
+  req.onsuccess = function(){
+    let data = req.result;
+
+    if(data){
+      // 🔥 成長
+      data.count = (data.count || 1) + 1;
+    }else{
+      // 新規
+      data = {
+        word: word,
+        mean: mean,
+        count: 1
+      };
+    }
+
+    store.put(data);
+  };
 
   tx.oncomplete = function(){
     load();
   };
 }
 
-// 読み込み
+// 表示
 function load(){
   if(!db) return;
 
@@ -76,7 +94,8 @@ function load(){
 
     e.target.result.forEach(item=>{
       const div = document.createElement("div");
-      div.innerText = item.word + " - " + item.mean;
+      div.innerText =
+        item.word + " - " + item.mean + " (" + (item.count || 1) + ")";
       list.appendChild(div);
     });
   };
