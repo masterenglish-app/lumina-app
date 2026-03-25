@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>LUMINA DB FIX</title>
+<title>LUMINA CORE</title>
 </head>
 <body style="background:#111;color:#fff;text-align:center;padding-top:80px;">
 
@@ -26,16 +26,17 @@ const steps = [
 let db = null;
 
 // DB初期化
-const request = indexedDB.open("LuminaDB", 1);
+const request = indexedDB.open("LuminaDB", 2);
 
 request.onupgradeneeded = function(e){
   const db = e.target.result;
-  db.createObjectStore("memory", {autoIncrement:true});
+  if(!db.objectStoreNames.contains("memory")){
+    const store = db.createObjectStore("memory", {keyPath:"word"});
+  }
 };
 
 request.onsuccess = function(e){
   db = e.target.result;
-  console.log("DB READY");
   load();
 };
 
@@ -46,10 +47,10 @@ function next(){
   document.getElementById("mean").innerText = s.m;
 }
 
-// Save
+// Save（進化版）
 function save(){
   if(!db){
-    alert("DB準備中…少し待ってください");
+    alert("DB準備中");
     return;
   }
 
@@ -59,11 +60,30 @@ function save(){
   const tx = db.transaction("memory","readwrite");
   const store = tx.objectStore("memory");
 
-  store.add({word, mean});
+  const req = store.get(word);
 
-  document.getElementById("lumina").innerText = "saved";
+  req.onsuccess = function(){
+    let data = req.result;
+
+    if(data){
+      // 🔥 既存 → 成長
+      data.count += 1;
+      data.lastSeen = Date.now();
+    }else{
+      // 新規
+      data = {
+        word: word,
+        mean: mean,
+        count: 1,
+        lastSeen: Date.now()
+      };
+    }
+
+    store.put(data);
+  };
 
   tx.oncomplete = function(){
+    document.getElementById("lumina").innerText = "記憶が深まりました";
     load();
   };
 }
@@ -83,7 +103,8 @@ function load(){
 
     req.result.forEach(item=>{
       const div = document.createElement("div");
-      div.innerText = item.word + " - " + item.mean;
+      div.innerText =
+        item.word + " - " + item.mean + " (回数:" + item.count + ")";
       list.appendChild(div);
     });
   };
