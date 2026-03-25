@@ -11,6 +11,7 @@
 <button onclick="next()">Next</button>
 <button onclick="save()">Save</button>
 
+<p id="status">DB準備中...</p>
 <div id="list"></div>
 
 <script>
@@ -21,7 +22,7 @@ const data = [
 
 let db = null;
 
-// DB作成
+// DB初期化
 const request = indexedDB.open("LuminaStep3", 1);
 
 request.onupgradeneeded = function(e){
@@ -31,6 +32,7 @@ request.onupgradeneeded = function(e){
 
 request.onsuccess = function(e){
   db = e.target.result;
+  document.getElementById("status").innerText = "準備完了";
   load();
 };
 
@@ -41,8 +43,13 @@ function next(){
   document.getElementById("mean").innerText = s.m;
 }
 
-// 保存（DB）
+// 保存（安全版）
 function save(){
+  if(!db){
+    alert("まだ準備中です。1秒待ってください");
+    return;
+  }
+
   const word = document.getElementById("word").innerText;
   const mean = document.getElementById("mean").innerText;
 
@@ -58,6 +65,8 @@ function save(){
 
 // 読み込み
 function load(){
+  if(!db) return;
+
   const tx = db.transaction("memory","readonly");
   const store = tx.objectStore("memory");
 
