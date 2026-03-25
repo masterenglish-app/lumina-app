@@ -2,76 +2,14 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>LUMINA STABLE</title>
 </head>
-<body style="background:#111;color:#fff;text-align:center;padding-top:80px;">
+<body>
 
-<h2 id="word">Tap</h2>
-<p id="mean"></p>
-
-<button onclick="next()">Next</button>
-<button onclick="save()">Save</button>
-
-<p id="lumina"></p>
-<div id="list"></div>
+<button onclick="test()">押して</button>
 
 <script>
-const base = [
-  {w:"A", m:"a"},
-  {w:"B", m:"b"},
-  {w:"C", m:"c"}
-];
-
-let db;
-
-const request = indexedDB.open("LuminaDB_clean", 1);
-
-request.onupgradeneeded = function(e){
-  const db = e.target.result;
-  db.createObjectStore("memory",{keyPath:"word"});
-};
-
-request.onsuccess = function(e){
-  db = e.target.result;
-  load();
-};
-
-function next(){
-  const s = base[Math.floor(Math.random()*base.length)];
-  document.getElementById("word").innerText = s.w;
-  document.getElementById("mean").innerText = s.m;
-}
-
-function save(){
-  const word = document.getElementById("word").innerText;
-  const mean = document.getElementById("mean").innerText;
-
-  const tx = db.transaction("memory","readwrite");
-  const store = tx.objectStore("memory");
-
-  store.put({
-    word: word,
-    mean: mean,
-    count: 1
-  });
-
-  tx.oncomplete = load;
-}
-
-function load(){
-  const tx = db.transaction("memory","readonly");
-  const store = tx.objectStore("memory");
-
-  store.getAll().onsuccess = function(e){
-    const list = document.getElementById("list");
-    list.innerHTML = "";
-
-    e.target.result.forEach(item=>{
-      const div = document.createElement("div");
-      div.innerText = item.word + " (" + item.count + ")";
-      list.appendChild(div);
-    });
-  };
+function test(){
+  alert("動いた");
 }
 </script>
 
