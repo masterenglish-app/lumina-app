@@ -19,7 +19,20 @@ const data = [
   {w:"B", m:"b"}
 ];
 
-let memory = [];
+let db = null;
+
+// DB作成
+const request = indexedDB.open("LuminaStep3", 1);
+
+request.onupgradeneeded = function(e){
+  const db = e.target.result;
+  db.createObjectStore("memory", {autoIncrement:true});
+};
+
+request.onsuccess = function(e){
+  db = e.target.result;
+  load();
+};
 
 // 単語表示
 function next(){
@@ -28,26 +41,36 @@ function next(){
   document.getElementById("mean").innerText = s.m;
 }
 
-// 保存
+// 保存（DB）
 function save(){
   const word = document.getElementById("word").innerText;
   const mean = document.getElementById("mean").innerText;
 
-  memory.push({word, mean});
+  const tx = db.transaction("memory","readwrite");
+  const store = tx.objectStore("memory");
 
-  render();
+  store.add({word, mean});
+
+  tx.oncomplete = function(){
+    load();
+  };
 }
 
-// 一覧表示
-function render(){
-  const list = document.getElementById("list");
-  list.innerHTML = "";
+// 読み込み
+function load(){
+  const tx = db.transaction("memory","readonly");
+  const store = tx.objectStore("memory");
 
-  memory.forEach(item=>{
-    const div = document.createElement("div");
-    div.innerText = item.word + " - " + item.mean;
-    list.appendChild(div);
-  });
+  store.getAll().onsuccess = function(e){
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    e.target.result.forEach(item=>{
+      const div = document.createElement("div");
+      div.innerText = item.word + " - " + item.mean;
+      list.appendChild(div);
+    });
+  };
 }
 </script>
 
